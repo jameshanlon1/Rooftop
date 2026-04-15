@@ -26,7 +26,7 @@ Rooftop connects to your existing IPTV service — it does not provide any conte
 ## Installation
 
 ### Sideload APK
-1. Download the latest APK from [Releases](https://github.com/yourusername/rooftop/releases)
+1. Download the latest APK from [Releases](https://github.com/jameshanlon1/rooftop/releases)
 2. On your device enable **Install from unknown sources**
 3. Install the APK and launch Rooftop
 4. Add your M3U URL or Xtream Codes credentials to get started
