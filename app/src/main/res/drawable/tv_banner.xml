@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <!-- Background -->
+    <path
+        android:fillColor="#0A0A0A"
+        android:pathData="M0,0h320v180H0z" />
+    <!-- Rooftop accent line -->
+    <path
+        android:pathData="M30,110 L90,60 L150,110 L210,60 L270,110"
+        android:strokeColor="#3D8EFF"
+        android:strokeWidth="5"
+        android:fillColor="@android:color/transparent" />
+</vector>
