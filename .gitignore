@@ -1,0 +1,40 @@
+# Built outputs
+*.apk
+*.aab
+*.dex
+*.class
+bin/
+build/
+out/
+
+# Gradle
+.gradle/
+gradle-wrapper.jar
+local.properties
+
+# Android Studio / IntelliJ
+*.iml
+*.iws
+*.ipr
+.idea/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Keystore / signing
+*.jks
+*.keystore
+*.p12
+keystore.properties
+
+# DS_Store / OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local env / secrets
+*.env
+local.properties
+
+# Logs
+*.log
