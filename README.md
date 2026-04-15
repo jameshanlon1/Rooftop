@@ -33,7 +33,7 @@ Rooftop connects to your existing IPTV service — it does not provide any conte
 
 ### Build from Source
 ```bash
-git clone https://github.com/yourusername/rooftop.git
+git clone https://github.com/jameshanlon1/rooftop.git
 cd rooftop
 ./gradlew assembleDebug
 ```
