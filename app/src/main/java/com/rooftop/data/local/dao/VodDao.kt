@@ -12,6 +12,15 @@ interface VodDao {
     @Query("SELECT * FROM vod_items ORDER BY name")
     fun getAll(): Flow<List<VodEntity>>
 
+    @Query("SELECT * FROM vod_items WHERE category = :category ORDER BY name")
+    fun getByCategory(category: String): Flow<List<VodEntity>>
+
+    @Query("SELECT DISTINCT category FROM vod_items WHERE category IS NOT NULL ORDER BY category")
+    fun getCategories(): Flow<List<String>>
+
+    @Query("SELECT * FROM vod_items WHERE id = :id LIMIT 1")
+    suspend fun getById(id: Long): VodEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(items: List<VodEntity>)
 

@@ -12,7 +12,7 @@ fun SeriesEntity.toDomain(): Series = Series(
     playlistId = playlistId
 )
 
-fun Series.toEntity(playlistId: Long): SeriesEntity = SeriesEntity(
+fun Series.toEntity(playlistId: Long = this.playlistId): SeriesEntity = SeriesEntity(
     id = id,
     name = name,
     coverUrl = coverUrl,

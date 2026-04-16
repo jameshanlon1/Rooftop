@@ -9,6 +9,7 @@ import com.rooftop.data.local.dao.PlaylistDao
 import com.rooftop.data.local.dao.ProgrammeDao
 import com.rooftop.data.local.dao.SeriesDao
 import com.rooftop.data.local.dao.VodDao
+import com.rooftop.data.local.dao.WatchProgressDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,6 +33,7 @@ object DatabaseModule {
     @Provides fun provideSeriesDao(db: RooftopDatabase): SeriesDao = db.seriesDao()
     @Provides fun providePlaylistDao(db: RooftopDatabase): PlaylistDao = db.playlistDao()
     @Provides fun provideProgrammeDao(db: RooftopDatabase): ProgrammeDao = db.programmeDao()
+    @Provides fun provideWatchProgressDao(db: RooftopDatabase): WatchProgressDao = db.watchProgressDao()
 
     @Provides
     @Singleton
