@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 interface ChannelRepository {
     fun getChannels(): Flow<List<Channel>>
     fun getChannelsByGroup(group: String): Flow<List<Channel>>
+    suspend fun getChannelById(id: Long): Channel?
     suspend fun refreshChannels(playlistId: Long): Result<Unit>
     suspend fun clearChannels(playlistId: Long)
 }

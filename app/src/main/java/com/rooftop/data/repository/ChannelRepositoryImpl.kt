@@ -1,6 +1,7 @@
 package com.rooftop.data.repository
 
 import com.rooftop.data.local.dao.ChannelDao
+import com.rooftop.data.local.entity.ChannelEntity
 import com.rooftop.data.local.mapper.toDomain
 import com.rooftop.data.local.mapper.toEntity
 import com.rooftop.data.parser.M3UParser
@@ -13,6 +14,7 @@ import com.rooftop.domain.model.Result
 import com.rooftop.domain.repository.ChannelRepository
 import com.rooftop.domain.repository.PlaylistRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
@@ -23,8 +25,29 @@ class ChannelRepositoryImpl @Inject constructor(
     private val xtreamApiService: XtreamApiService
 ) : ChannelRepository {
 
+    // TODO: remove before release — seeds one test channel when DB is empty
+    private suspend fun seedTestChannelIfEmpty() {
+        if (channelDao.getCount() == 0) {
+            channelDao.insertAll(
+                listOf(
+                    ChannelEntity(
+                        id = 0,
+                        name = "Test Stream",
+                        streamUrl = "https://netanyahu.modifiles.fans/secure/tsFxHWxTwuEphJbkFZqcpuilIWXeJICM/1776355200/1776382200/uel_avl/tracks-v1a1/mono.ts.m3u8",
+                        logoUrl = null,
+                        groupTitle = "Test",
+                        epgChannelId = null,
+                        streamType = "LIVE",
+                        playlistId = 0L
+                    )
+                )
+            )
+        }
+    }
+
     override fun getChannels(): Flow<List<Channel>> =
-        channelDao.getAll().map { it.map { entity -> entity.toDomain() } }
+        channelDao.getAll().onStart { seedTestChannelIfEmpty() }
+            .map { it.map { entity -> entity.toDomain() } }
 
     override fun getChannelsByGroup(group: String): Flow<List<Channel>> =
         channelDao.getByGroup(group).map { it.map { entity -> entity.toDomain() } }
@@ -53,6 +76,9 @@ class ChannelRepositoryImpl @Inject constructor(
     } catch (e: Exception) {
         Result.Error(e)
     }
+
+    override suspend fun getChannelById(id: Long): Channel? =
+        channelDao.getById(id)?.toDomain()
 
     override suspend fun clearChannels(playlistId: Long) {
         channelDao.deleteByPlaylist(playlistId)
