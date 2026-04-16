@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.rooftop.ui.tv.channels.ChannelListScreen
+import com.rooftop.ui.tv.epg.EpgScreen
 import com.rooftop.ui.tv.player.PlayerScreen
 
 @Composable
@@ -21,8 +22,13 @@ fun RooftopNavGraph() {
             ChannelListScreen(
                 onChannelSelected = { channel ->
                     navController.navigate(Route.Player.withArgs(channel.id))
-                }
+                },
+                onOpenEpg = { navController.navigate(Route.Epg.path) }
             )
+        }
+
+        composable(Route.Epg.path) {
+            EpgScreen(onBack = { navController.popBackStack() })
         }
 
         composable(

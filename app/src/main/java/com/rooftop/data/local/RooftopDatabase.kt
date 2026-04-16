@@ -4,10 +4,12 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.rooftop.data.local.dao.ChannelDao
 import com.rooftop.data.local.dao.PlaylistDao
+import com.rooftop.data.local.dao.ProgrammeDao
 import com.rooftop.data.local.dao.SeriesDao
 import com.rooftop.data.local.dao.VodDao
 import com.rooftop.data.local.entity.ChannelEntity
 import com.rooftop.data.local.entity.PlaylistEntity
+import com.rooftop.data.local.entity.ProgrammeEntity
 import com.rooftop.data.local.entity.SeriesEntity
 import com.rooftop.data.local.entity.VodEntity
 
@@ -16,9 +18,10 @@ import com.rooftop.data.local.entity.VodEntity
         ChannelEntity::class,
         VodEntity::class,
         SeriesEntity::class,
-        PlaylistEntity::class
+        PlaylistEntity::class,
+        ProgrammeEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class RooftopDatabase : RoomDatabase() {
@@ -26,4 +29,5 @@ abstract class RooftopDatabase : RoomDatabase() {
     abstract fun vodDao(): VodDao
     abstract fun seriesDao(): SeriesDao
     abstract fun playlistDao(): PlaylistDao
+    abstract fun programmeDao(): ProgrammeDao
 }

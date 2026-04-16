@@ -3,6 +3,7 @@ package com.rooftop.ui.tv.channels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rooftop.domain.model.Result
+import com.rooftop.domain.repository.EpgRepository
 import com.rooftop.domain.usecase.GetChannelsUseCase
 import com.rooftop.domain.usecase.RefreshChannelsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ChannelListViewModel @Inject constructor(
     private val getChannelsUseCase: GetChannelsUseCase,
-    private val refreshChannelsUseCase: RefreshChannelsUseCase
+    private val refreshChannelsUseCase: RefreshChannelsUseCase,
+    private val epgRepository: EpgRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChannelListUiState(isLoading = true))
@@ -40,7 +42,21 @@ class ChannelListViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(channels = channels, groups = groups, isLoading = false, error = null)
                     }
+                    loadNowNext(channels.mapNotNull { it.epgChannelId })
                 }
+        }
+    }
+
+    private fun loadNowNext(epgChannelIds: List<String>) {
+        viewModelScope.launch {
+            val nowMs = System.currentTimeMillis()
+            val nowPlaying = mutableMapOf<String, com.rooftop.domain.model.Programme?>()
+            val nextUp = mutableMapOf<String, com.rooftop.domain.model.Programme?>()
+            epgChannelIds.forEach { id ->
+                nowPlaying[id] = epgRepository.getNow(id, nowMs)
+                nextUp[id] = epgRepository.getNext(id, nowMs)
+            }
+            _uiState.update { it.copy(nowPlaying = nowPlaying, nextUp = nextUp) }
         }
     }
 

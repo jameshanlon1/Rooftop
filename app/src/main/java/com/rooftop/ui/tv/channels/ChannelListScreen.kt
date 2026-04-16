@@ -29,6 +29,7 @@ import com.rooftop.domain.model.Channel
 @Composable
 fun ChannelListScreen(
     onChannelSelected: (Channel) -> Unit,
+    onOpenEpg: () -> Unit = {},
     viewModel: ChannelListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -92,6 +93,8 @@ fun ChannelListScreen(
                         items(uiState.channels) { channel ->
                             ChannelCard(
                                 channel = channel,
+                                nowPlaying = channel.epgChannelId?.let { uiState.nowPlaying[it] },
+                                nextUp = channel.epgChannelId?.let { uiState.nextUp[it] },
                                 onClick = { onChannelSelected(channel) },
                                 modifier = Modifier.padding(4.dp)
                             )
