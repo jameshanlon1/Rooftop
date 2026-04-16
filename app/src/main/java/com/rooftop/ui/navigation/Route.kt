@@ -1,6 +1,8 @@
 package com.rooftop.ui.navigation
 
 sealed class Route(val path: String) {
+    object Home : Route("home")
+    object Search : Route("search")
     object ChannelList : Route("channel_list")
     object Settings : Route("settings")
     object Epg : Route("epg")

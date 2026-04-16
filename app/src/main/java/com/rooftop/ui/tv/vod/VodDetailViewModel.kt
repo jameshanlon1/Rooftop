@@ -2,6 +2,9 @@ package com.rooftop.ui.tv.vod
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rooftop.data.local.dao.VodDao
+import com.rooftop.data.local.mapper.toDomain
+import com.rooftop.data.preferences.PreferencesManager
 import com.rooftop.domain.repository.PlaylistRepository
 import com.rooftop.domain.repository.VodRepository
 import com.rooftop.domain.repository.WatchProgressRepository
@@ -19,8 +22,10 @@ import javax.inject.Inject
 @HiltViewModel
 class VodDetailViewModel @Inject constructor(
     private val vodRepository: VodRepository,
+    private val vodDao: VodDao,
     private val playlistRepository: PlaylistRepository,
     private val watchProgressRepository: WatchProgressRepository,
+    private val preferencesManager: PreferencesManager,
     private val playbackRequestHolder: PlaybackRequestHolder
 ) : ViewModel() {
 
@@ -30,17 +35,42 @@ class VodDetailViewModel @Inject constructor(
     fun load(vodId: Long) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            // Use first Xtream playlist found, or any playlist
             val playlist = playlistRepository.getPlaylists().first()
                 .firstOrNull { it.xtreamBaseUrl != null }
                 ?: playlistRepository.getPlaylists().first().firstOrNull()
 
             val savedPosition = watchProgressRepository.getProgress("vod_$vodId")?.positionMs ?: 0L
             val info = playlist?.let { vodRepository.getVodInfo(vodId, it) }
+            val isFav = preferencesManager.favouriteIds.first().contains("vod_$vodId")
+
+            // Load recommended: same category, up to 20 items excluding this one
+            val recommended = if (info != null && !info.genre.isNullOrBlank()) {
+                vodDao.getByCategory(info.genre!!).first()
+                    .filter { it.id != vodId }
+                    .take(20)
+                    .map { it.toDomain() }
+            } else {
+                vodDao.search("").take(20).map { it.toDomain() }
+            }
 
             _uiState.update {
-                it.copy(vodInfo = info, savedPositionMs = savedPosition, isLoading = false)
+                it.copy(
+                    vodInfo = info,
+                    savedPositionMs = savedPosition,
+                    isLoading = false,
+                    isFavourite = isFav,
+                    recommendedVod = recommended
+                )
             }
+        }
+    }
+
+    fun toggleFavourite() {
+        val vodId = _uiState.value.vodInfo?.item?.id ?: return
+        viewModelScope.launch {
+            preferencesManager.toggleFavourite("vod_$vodId")
+            val isFav = preferencesManager.favouriteIds.first().contains("vod_$vodId")
+            _uiState.update { it.copy(isFavourite = isFav) }
         }
     }
 
