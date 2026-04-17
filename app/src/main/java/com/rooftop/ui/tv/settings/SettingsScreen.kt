@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -256,19 +258,24 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
         }
     }
 
-    // Add / Edit playlist dialog
+    // Add / Edit playlist dialog — uses Dialog to create its own window so TV focus is captured
     if (uiState.showAddDialog) {
-        AddPlaylistDialog(
-            uiState = uiState,
-            onTypeChanged = { viewModel.onAddTypeChanged(it) },
-            onNameChanged = { viewModel.onAddNameChanged(it) },
-            onUrlChanged = { viewModel.onAddUrlChanged(it) },
-            onXtreamBaseChanged = { viewModel.onAddXtreamBaseChanged(it) },
-            onXtreamUserChanged = { viewModel.onAddXtreamUserChanged(it) },
-            onXtreamPassChanged = { viewModel.onAddXtreamPassChanged(it) },
-            onAdd = { viewModel.addPlaylist() },
-            onDismiss = { viewModel.hideAddDialog() }
-        )
+        Dialog(
+            onDismissRequest = { viewModel.hideAddDialog() },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            AddPlaylistDialog(
+                uiState = uiState,
+                onTypeChanged = { viewModel.onAddTypeChanged(it) },
+                onNameChanged = { viewModel.onAddNameChanged(it) },
+                onUrlChanged = { viewModel.onAddUrlChanged(it) },
+                onXtreamBaseChanged = { viewModel.onAddXtreamBaseChanged(it) },
+                onXtreamUserChanged = { viewModel.onAddXtreamUserChanged(it) },
+                onXtreamPassChanged = { viewModel.onAddXtreamPassChanged(it) },
+                onAdd = { viewModel.addPlaylist() },
+                onDismiss = { viewModel.hideAddDialog() }
+            )
+        }
     }
 }
 
