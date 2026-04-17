@@ -21,6 +21,9 @@ interface SeriesDao {
     @Query("SELECT * FROM series WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): SeriesEntity?
 
+    @Query("SELECT * FROM series WHERE name LIKE '%' || :query || '%' ORDER BY name LIMIT 30")
+    suspend fun search(query: String): List<SeriesEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(items: List<SeriesEntity>)
 

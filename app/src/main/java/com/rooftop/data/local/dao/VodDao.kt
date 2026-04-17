@@ -21,6 +21,9 @@ interface VodDao {
     @Query("SELECT * FROM vod_items WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): VodEntity?
 
+    @Query("SELECT * FROM vod_items WHERE name LIKE '%' || :query || '%' ORDER BY name LIMIT 30")
+    suspend fun search(query: String): List<VodEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(items: List<VodEntity>)
 

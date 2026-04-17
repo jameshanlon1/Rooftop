@@ -4,32 +4,49 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.tv.material3.Button
 import androidx.tv.material3.ExperimentalTvMaterial3Api
+import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.OutlinedButton
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import com.rooftop.domain.model.Playlist
 import com.rooftop.domain.model.PlaylistType
+import com.rooftop.ui.theme.RooftopDivider
+import com.rooftop.ui.theme.RooftopSecondary
+import com.rooftop.ui.theme.RooftopSurface
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -38,85 +55,208 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
 
     Surface(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 48.dp, vertical = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Playlists section
+
+            // ── Active Playlist header ────────────────────────────────────────
             item {
-                SectionTitle("Playlists")
-            }
-
-            if (uiState.playlists.isEmpty()) {
-                item {
-                    Text(
-                        "No playlists added yet",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            items(uiState.playlists) { playlist ->
-                PlaylistRow(
-                    playlist = playlist,
-                    onDelete = { viewModel.deletePlaylist(playlist.id) }
+                ActivePlaylistRow(
+                    playlist = uiState.activePlaylist,
+                    onAddPlaylist = { viewModel.showAddDialog() }
                 )
             }
 
-            item {
-                Button(onClick = { viewModel.showAddDialog() }) {
-                    Text("+ Add Playlist")
-                }
-            }
+            item { Spacer(Modifier.height(16.dp)) }
 
-            // EPG section
-            item { SectionTitle("EPG (Electronic Programme Guide)") }
-
+            // ── PLAYLIST SETTINGS ─────────────────────────────────────────────
+            item { GroupHeader("Playlist Settings") }
             item {
-                Column {
-                    Text(
-                        "XMLTV URL",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                SettingsCard {
+                    // Refresh Content
+                    SettingsRow(
+                        label = "Refresh Content",
+                        trailingContent = {
+                            if (uiState.isSyncing) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        Icons.Default.Sync,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(Modifier.width(4.dp))
+                                    Text("Syncing…", style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary)
+                                }
+                            } else {
+                                StatusBadge(
+                                    label = uiState.syncStatus ?: "Synced",
+                                    color = if (uiState.syncStatus?.contains("error") == true)
+                                                RooftopSecondary else Color(0xFF22C55E)
+                                )
+                            }
+                        },
+                        onClick = { if (!uiState.isSyncing) viewModel.syncAll() }
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    SettingsTextField(
-                        value = uiState.epgUrl,
-                        placeholder = "https://example.com/epg.xml or .xml.gz",
-                        onValueChange = { viewModel.onEpgUrlChanged(it) }
+                    SettingsDivider()
+                    // Edit Playlist / Add Playlist
+                    SettingsRow(
+                        label = if (uiState.activePlaylist != null) "Edit Playlist" else "Add Playlist",
+                        value = uiState.activePlaylist?.let {
+                            when (it.type) {
+                                PlaylistType.XTREAM -> "Xtream  •  ${it.xtreamBaseUrl ?: ""}"
+                                PlaylistType.M3U -> "M3U  •  ${it.url ?: ""}"
+                            }
+                        },
+                        showChevron = true,
+                        onClick = { viewModel.showAddDialog() }
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { viewModel.saveEpgUrl() }) {
-                        Text("Save EPG URL")
+                    SettingsDivider()
+                    // EPG URL
+                    SettingsRow(
+                        label = "EPG Source URL",
+                        value = uiState.epgUrl.ifBlank { "Not set" },
+                        showChevron = true,
+                        onClick = { /* inline edit below */ }
+                    )
+                    if (uiState.epgUrl.isNotBlank()) {
+                        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                            SettingsTextField(
+                                value = uiState.epgUrl,
+                                placeholder = "https://example.com/epg.xml",
+                                onValueChange = { viewModel.onEpgUrlChanged(it) }
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Button(onClick = { viewModel.saveEpgUrl() }) {
+                                Text("Save EPG URL")
+                            }
+                        }
                     }
+                    SettingsDivider()
+                    SettingsRow(
+                        label = "Manage Categories",
+                        showChevron = true,
+                        value = "Coming soon",
+                        onClick = {}
+                    )
+                    SettingsDivider()
+                    SettingsRow(
+                        label = "Information",
+                        showChevron = true,
+                        onClick = {}
+                    )
                 }
             }
 
-            // Sync section
-            item { SectionTitle("Sync") }
-
-            item {
-                Column {
-                    Button(
-                        onClick = { viewModel.syncAll() },
-                        enabled = !uiState.isSyncing
+            // Playlists list (all added playlists)
+            if (uiState.playlists.isNotEmpty()) {
+                item { Spacer(Modifier.height(8.dp)) }
+                item { GroupHeader("All Playlists") }
+                items(uiState.playlists) { playlist ->
+                    PlaylistCard(
+                        playlist = playlist,
+                        onDelete = { viewModel.deletePlaylist(playlist.id) }
+                    )
+                }
+                item {
+                    Surface(
+                        onClick = { viewModel.showAddDialog() },
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(if (uiState.isSyncing) "Syncing…" else "Sync All Content")
-                    }
-                    if (uiState.syncStatus != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            uiState.syncStatus!!,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
+                            text = "+ Add Playlist",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
                         )
                     }
                 }
             }
+
+            item { Spacer(Modifier.height(16.dp)) }
+
+            // ── APP SETTINGS ──────────────────────────────────────────────────
+            item { GroupHeader("App Settings") }
+            item {
+                SettingsCard {
+                    // §3.1 Player
+                    SettingsRow(label = "Player", showChevron = true, onClick = {})
+                    SettingsDivider()
+                    // Auto-play next episode (most-used player setting — shown inline)
+                    SettingsToggleRow(
+                        label = "Auto-Play Next Episode",
+                        checked = uiState.autoPlayNextEpisode,
+                        onToggle = { viewModel.onAutoPlayNextEpisodeToggled() }
+                    )
+                    SettingsDivider()
+                    // §3.2 Interface
+                    SettingsRow(label = "Interface", showChevron = true, onClick = {})
+                    SettingsDivider()
+                    SettingsToggleRow(
+                        label = "Blur Unseen Episodes",
+                        checked = uiState.blurUnseenEpisodes,
+                        onToggle = { viewModel.onBlurUnseenEpisodesToggled() }
+                    )
+                    SettingsDivider()
+                    SettingsToggleRow(
+                        label = "New Episode Alerts",
+                        checked = uiState.newEpisodeAlerts,
+                        onToggle = { viewModel.onNewEpisodeAlertsToggled() }
+                    )
+                    SettingsDivider()
+                    SettingsToggleRow(
+                        label = "Show What's New on Update",
+                        checked = uiState.showWhatsNewOnUpdate,
+                        onToggle = { viewModel.onShowWhatsNewToggled() }
+                    )
+                    SettingsDivider()
+                    // §3.3 Trakt
+                    SettingsRow(
+                        label = "Trakt",
+                        value = "Not connected",
+                        showChevron = true,
+                        onClick = {}
+                    )
+                    SettingsDivider()
+                    // §3.4 OpenSubtitles
+                    SettingsRow(
+                        label = "OpenSubtitles",
+                        value = "Not connected",
+                        showChevron = true,
+                        onClick = {}
+                    )
+                }
+            }
+
+            item { Spacer(Modifier.height(16.dp)) }
+
+            // ── STORAGE ───────────────────────────────────────────────────────
+            item { GroupHeader("Storage") }
+            item {
+                SettingsCard {
+                    SettingsRow(
+                        label = "Downloads",
+                        value = "Coming soon",
+                        showChevron = true,
+                        onClick = {}
+                    )
+                    SettingsDivider()
+                    SettingsRow(
+                        label = "Clear Cache",
+                        value = "",
+                        showChevron = false,
+                        onClick = {}
+                    )
+                }
+            }
+
+            item { Spacer(Modifier.height(32.dp)) }
         }
     }
 
-    // Add playlist dialog
+    // Add / Edit playlist dialog
     if (uiState.showAddDialog) {
         AddPlaylistDialog(
             uiState = uiState,
@@ -132,32 +272,246 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     }
 }
 
+// ─── Section header (small-caps style, §Visual Style) ────────────────────────
+@Composable
+private fun GroupHeader(title: String) {
+    Text(
+        text = title.uppercase(),
+        style = MaterialTheme.typography.labelSmall.copy(
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 1.2.sp
+        ),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp)
+    )
+}
+
+// ─── Card container for a group of settings rows ─────────────────────────────
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-private fun PlaylistRow(playlist: Playlist, onDelete: () -> Unit) {
+private fun SettingsCard(content: @Composable () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(RooftopSurface, RoundedCornerShape(16.dp))
+        ) {
+            content()
+        }
+    }
+}
+
+// ─── Single navigation/info row ──────────────────────────────────────────────
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun SettingsRow(
+    label: String,
+    value: String? = null,
+    showChevron: Boolean = false,
+    trailingContent: (@Composable () -> Unit)? = null,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f)
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                if (trailingContent != null) {
+                    trailingContent()
+                } else if (!value.isNullOrBlank()) {
+                    Text(
+                        text = value,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(end = if (showChevron) 0.dp else 0.dp)
+                    )
+                }
+                if (showChevron) {
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ─── Toggle row ──────────────────────────────────────────────────────────────
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun SettingsToggleRow(label: String, checked: Boolean, onToggle: () -> Unit) {
+    Surface(
+        onClick = onToggle,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = label, style = MaterialTheme.typography.bodyMedium)
+            ToggleIndicator(checked = checked)
+        }
+    }
+}
+
+// Simple custom toggle that doesn't require material3 dependency
+@Composable
+private fun ToggleIndicator(checked: Boolean) {
+    val trackColor = if (checked) MaterialTheme.colorScheme.primary
+                     else Color.White.copy(alpha = 0.20f)
+    Box(
+        modifier = Modifier
+            .width(44.dp)
+            .height(24.dp)
+            .clip(RoundedCornerShape(50))
+            .background(trackColor)
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(2.dp)
+                .size(20.dp)
+                .align(if (checked) Alignment.CenterEnd else Alignment.CenterStart)
+                .clip(CircleShape)
+                .background(Color.White)
+        )
+    }
+}
+
+// ─── 1dp divider between rows ────────────────────────────────────────────────
+@Composable
+private fun SettingsDivider() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp)
+            .height(1.dp)
+            .background(RooftopDivider)
+    )
+}
+
+// ─── Status badge (e.g. "Synced" green, "Error" amber) ───────────────────────
+@Composable
+private fun StatusBadge(label: String, color: Color) {
+    Box(
+        modifier = Modifier
+            .background(color.copy(alpha = 0.15f), RoundedCornerShape(50))
+            .padding(horizontal = 8.dp, vertical = 2.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+            color = color
+        )
+    }
+}
+
+// ─── Active playlist header row ──────────────────────────────────────────────
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun ActivePlaylistRow(playlist: Playlist?, onAddPlaylist: () -> Unit) {
+    Surface(
+        onClick = if (playlist != null) { {} } else onAddPlaylist,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(RooftopSurface, RoundedCornerShape(16.dp))
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.PlayCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = playlist?.name ?: "No playlist added",
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                )
+                Text(
+                    text = if (playlist != null) "Active playlist  •  Tap to switch"
+                           else "Add a playlist to get started",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (playlist == null) {
+                Button(onClick = onAddPlaylist) { Text("Add Playlist") }
+            } else {
+                StatusBadge("Synced", Color(0xFF22C55E))
+                Spacer(Modifier.width(8.dp))
+                Icon(
+                    Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    }
+}
+
+// ─── Playlist list card ───────────────────────────────────────────────────────
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun PlaylistCard(playlist: Playlist, onDelete: () -> Unit) {
     Surface(modifier = Modifier.fillMaxWidth()) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(RooftopSurface, RoundedCornerShape(12.dp))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(playlist.name, style = MaterialTheme.typography.bodyLarge)
+                Text(playlist.name, style = MaterialTheme.typography.bodyMedium)
                 Text(
                     text = when (playlist.type) {
                         PlaylistType.M3U -> "M3U  •  ${playlist.url ?: ""}"
                         PlaylistType.XTREAM -> "Xtream  •  ${playlist.xtreamBaseUrl ?: ""}"
                     },
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-            OutlinedButton(onClick = onDelete) {
-                Text("Remove")
-            }
+            OutlinedButton(onClick = onDelete) { Text("Remove") }
         }
     }
 }
 
+// ─── Add Playlist dialog ──────────────────────────────────────────────────────
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun AddPlaylistDialog(
@@ -174,57 +528,95 @@ private fun AddPlaylistDialog(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.6f)),
+            .background(Color.Black.copy(alpha = 0.65f)),
         contentAlignment = Alignment.Center
     ) {
         Surface(
-            modifier = Modifier
-                .width(480.dp)
-                .padding(24.dp)
+            modifier = Modifier.width(520.dp),
+            shape = MaterialTheme.shapes.medium
         ) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text("Add Playlist", style = MaterialTheme.typography.titleLarge)
-                Spacer(modifier = Modifier.height(16.dp))
+            Column(
+                modifier = Modifier
+                    .background(RooftopSurface, RoundedCornerShape(20.dp))
+                    .padding(32.dp)
+            ) {
+                Text(
+                    "Add Playlist",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
+                Text(
+                    "Add your content source",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(24.dp))
 
-                // Type selector
+                // TYPE selector
+                GroupHeader("Type")
+                Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     PlaylistType.values().forEach { type ->
-                        Button(
+                        val isSelected = uiState.addType == type
+                        Surface(
                             onClick = { onTypeChanged(type) },
+                            modifier = Modifier
+                                .background(
+                                    if (isSelected) MaterialTheme.colorScheme.primary
+                                    else Color.Transparent,
+                                    RoundedCornerShape(50)
+                                )
                         ) {
                             Text(
-                                type.name,
-                                color = if (uiState.addType == type)
-                                    MaterialTheme.colorScheme.onPrimary
-                                else MaterialTheme.colorScheme.onSurface
+                                text = type.name,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                        else MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(Modifier.height(20.dp))
 
+                // ICON & NAME
+                GroupHeader("Icon & Name")
+                Spacer(Modifier.height(8.dp))
                 LabeledField("Name", uiState.addName, "My Playlist", onNameChanged)
-                Spacer(modifier = Modifier.height(8.dp))
 
+                Spacer(Modifier.height(20.dp))
+
+                // CONNECTION
+                GroupHeader("Connection")
+                Spacer(Modifier.height(8.dp))
                 when (uiState.addType) {
-                    PlaylistType.M3U -> {
-                        LabeledField("M3U URL", uiState.addUrl, "https://…/playlist.m3u", onUrlChanged)
-                    }
                     PlaylistType.XTREAM -> {
-                        LabeledField("Base URL", uiState.addXtreamBase, "http://provider.com:port", onXtreamBaseChanged)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        LabeledField("Username", uiState.addXtreamUser, "username", onXtreamUserChanged)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        LabeledField("Password", uiState.addXtreamPass, "password", onXtreamPassChanged)
+                        LabeledField("Server", uiState.addXtreamBase, "http://example.com:8080", onXtreamBaseChanged)
+                        Spacer(Modifier.height(8.dp))
+                        LabeledField("Username", uiState.addXtreamUser, "", onXtreamUserChanged)
+                        Spacer(Modifier.height(8.dp))
+                        LabeledField("Password", uiState.addXtreamPass, "", onXtreamPassChanged)
+                    }
+                    PlaylistType.M3U -> {
+                        LabeledField("URL", uiState.addUrl, "https://…/playlist.m3u", onUrlChanged)
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(Modifier.height(28.dp))
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = onAdd) { Text("Add") }
-                    OutlinedButton(onClick = onDismiss) { Text("Cancel") }
+                // Actions
+                Button(
+                    onClick = onAdd,
+                    modifier = Modifier.fillMaxWidth().height(52.dp)
+                ) {
+                    Text("Connect", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold))
+                }
+                Spacer(Modifier.height(10.dp))
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Cancel")
                 }
             }
         }
@@ -232,19 +624,14 @@ private fun AddPlaylistDialog(
 }
 
 @Composable
-private fun LabeledField(
-    label: String,
-    value: String,
-    placeholder: String,
-    onValueChange: (String) -> Unit
-) {
+private fun LabeledField(label: String, value: String, placeholder: String, onValueChange: (String) -> Unit) {
     Column {
-        androidx.tv.material3.Text(
+        Text(
             label,
-            style = androidx.tv.material3.MaterialTheme.typography.labelMedium,
-            color = androidx.tv.material3.MaterialTheme.colorScheme.onSurfaceVariant
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(Modifier.height(4.dp))
         SettingsTextField(value = value, placeholder = placeholder, onValueChange = onValueChange)
     }
 }
@@ -252,7 +639,10 @@ private fun LabeledField(
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun SettingsTextField(value: String, placeholder: String, onValueChange: (String) -> Unit) {
-    Surface(modifier = Modifier.fillMaxWidth()) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.extraSmall
+    ) {
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -274,13 +664,4 @@ private fun SettingsTextField(value: String, placeholder: String, onValueChange:
             }
         )
     }
-}
-
-@Composable
-private fun SectionTitle(title: String) {
-    androidx.tv.material3.Text(
-        text = title,
-        style = androidx.tv.material3.MaterialTheme.typography.titleMedium,
-        color = androidx.tv.material3.MaterialTheme.colorScheme.primary
-    )
 }

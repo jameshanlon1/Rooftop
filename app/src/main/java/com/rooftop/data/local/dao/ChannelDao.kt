@@ -24,6 +24,9 @@ interface ChannelDao {
     @Query("SELECT * FROM channels WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): ChannelEntity?
 
+    @Query("SELECT * FROM channels WHERE name LIKE '%' || :query || '%' ORDER BY name LIMIT 30")
+    suspend fun search(query: String): List<ChannelEntity>
+
     @Query("SELECT COUNT(*) FROM channels")
     suspend fun getCount(): Int
 
