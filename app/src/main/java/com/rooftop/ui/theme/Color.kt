@@ -2,11 +2,16 @@ package com.rooftop.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val RooftopBackground = Color(0xFF0A0A0A)
-val RooftopSurface = Color(0xFF1A1A1A)
-val RooftopSurfaceVariant = Color(0xFF252525)
-val RooftopPrimary = Color(0xFF3D8EFF)
-val RooftopOnPrimary = Color(0xFFFFFFFF)
-val RooftopOnSurface = Color(0xFFE0E0E0)
-val RooftopOnSurfaceVariant = Color(0xFF9E9E9E)
-val RooftopError = Color(0xFFCF6679)
+// §1.1 Colour Palette
+val RooftopBackground       = Color(0xFF0D0D0D)
+val RooftopSurface          = Color(0xFF1A1A1A)
+val RooftopSurfaceRaised    = Color(0xFF242424)
+val RooftopPrimary          = Color(0xFF3B82F6)
+val RooftopSecondary        = Color(0xFFF59E0B)  // amber — Live badge etc.
+val RooftopOnPrimary        = Color(0xFFFFFFFF)
+val RooftopOnSurface        = Color(0xFFFFFFFF)
+val RooftopOnSurfaceVariant = Color(0xFFA0A0A0)
+val RooftopTextDisabled     = Color(0xFF505050)
+val RooftopDivider          = Color(0xFF2A2A2A)
+val RooftopError            = Color(0xFFCF6679)
+val RooftopOverlay          = Color(0xA6000000)  // rgba(0,0,0,0.65)

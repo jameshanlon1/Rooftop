@@ -58,6 +58,7 @@ fun RooftopNavGraph(playbackRequestHolder: PlaybackRequestHolder) {
         if (showNavBar) {
             TopNavBar(
                 selectedTab = routeToTab(currentRoute),
+                isHome = currentRoute == Route.Home.path,
                 onTabSelected = { tab ->
                     val route = when (tab) {
                         TopNavTab.HOME -> Route.Home.path

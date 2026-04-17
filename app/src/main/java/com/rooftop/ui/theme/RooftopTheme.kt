@@ -10,14 +10,16 @@ import androidx.tv.material3.darkColorScheme
 fun RooftopTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = darkColorScheme(
-            primary = RooftopPrimary,
-            onPrimary = RooftopOnPrimary,
-            background = RooftopBackground,
-            surface = RooftopSurface,
-            surfaceVariant = RooftopSurfaceVariant,
-            onSurface = RooftopOnSurface,
+            primary          = RooftopPrimary,
+            onPrimary        = RooftopOnPrimary,
+            secondary        = RooftopSecondary,
+            onSecondary      = RooftopOnPrimary,
+            background       = RooftopBackground,
+            surface          = RooftopSurface,
+            surfaceVariant   = RooftopSurfaceRaised,
+            onSurface        = RooftopOnSurface,
             onSurfaceVariant = RooftopOnSurfaceVariant,
-            error = RooftopError
+            error            = RooftopError
         ),
         content = content
     )
