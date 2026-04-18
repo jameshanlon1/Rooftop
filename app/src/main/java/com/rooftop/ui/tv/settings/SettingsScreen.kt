@@ -239,14 +239,14 @@ private fun GroupHeader(title: String) {
     )
 }
 
-// ─── Card container — non-clickable Surface, color set directly (no white corners) ──
-@OptIn(ExperimentalTvMaterial3Api::class)
+// ─── Card container ───────────────────────────────────────────────────────────
 @Composable
 private fun SettingsCard(content: @Composable () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = RooftopSurface
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(RooftopSurface)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             content()
@@ -434,11 +434,11 @@ private fun ActivePlaylistRow(playlist: Playlist?, onAddPlaylist: () -> Unit) {
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun PlaylistCard(playlist: Playlist, onDelete: () -> Unit) {
-    // Non-clickable surface — color set directly, no white corners
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = RooftopSurface
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(RooftopSurface)
     ) {
         Row(
             modifier = Modifier
@@ -484,11 +484,11 @@ private fun AddPlaylistDialog(
             .background(Color.Black.copy(alpha = 0.70f)),
         contentAlignment = Alignment.Center
     ) {
-        // Non-clickable Surface — color set directly
-        Surface(
-            modifier = Modifier.width(560.dp),
-            shape = RoundedCornerShape(20.dp),
-            color = RooftopSurface
+        Box(
+            modifier = Modifier
+                .width(560.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(RooftopSurface)
         ) {
             Column(modifier = Modifier.padding(32.dp)) {
 
@@ -583,14 +583,13 @@ private fun AddPlaylistDialog(
 }
 
 // ─── Plain text input field ───────────────────────────────────────────────────
-@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun InputField(value: String, placeholder: String, onValueChange: (String) -> Unit) {
-    // Non-clickable Surface with explicit color — no white corners
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        color = Color.White.copy(alpha = 0.07f)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.White.copy(alpha = 0.07f))
     ) {
         BasicTextField(
             value = value,
