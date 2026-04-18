@@ -1,10 +1,15 @@
 package com.rooftop.ui.navigation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -27,7 +32,6 @@ import com.rooftop.ui.tv.vod.VodDetailScreen
 import com.rooftop.ui.tv.vod.VodPlayerScreen
 import com.rooftop.ui.tv.vod.VodScreen
 
-// Routes where the top nav bar should be visible
 private val TOP_LEVEL_ROUTES = setOf(
     Route.Home.path,
     Route.Search.path,
@@ -54,11 +58,22 @@ fun RooftopNavGraph(playbackRequestHolder: PlaybackRequestHolder) {
     val currentRoute = backStackEntry?.destination?.route
     val showNavBar = currentRoute in TOP_LEVEL_ROUTES
 
+    val navFocusRequester = remember { FocusRequester() }
+    var navBarHasFocus by remember { mutableStateOf(false) }
+
+    // Back from any top-level screen focuses the nav bar instead of popping.
+    // When the nav bar already has focus, back is not intercepted so the system can exit the app.
+    BackHandler(enabled = showNavBar && !navBarHasFocus) {
+        try { navFocusRequester.requestFocus() } catch (_: Exception) {}
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         if (showNavBar) {
             TopNavBar(
                 selectedTab = routeToTab(currentRoute),
                 isHome = currentRoute == Route.Home.path,
+                focusRequester = navFocusRequester,
+                onFocusChanged = { navBarHasFocus = it },
                 onTabSelected = { tab ->
                     val route = when (tab) {
                         TopNavTab.HOME -> Route.Home.path
@@ -70,7 +85,6 @@ fun RooftopNavGraph(playbackRequestHolder: PlaybackRequestHolder) {
                     }
                     if (route != currentRoute) {
                         navController.navigate(route) {
-                            // Pop up to home to avoid building a huge back stack
                             popUpTo(Route.Home.path) { saveState = true }
                             launchSingleTop = true
                             restoreState = true

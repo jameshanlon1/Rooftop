@@ -25,6 +25,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -44,13 +47,14 @@ enum class TopNavTab(val label: String, val icon: ImageVector) {
     SETTINGS("Settings", Icons.Default.Settings)
 }
 
-// §1.7 — Floating pill nav bar. Active item darker, focus triggers navigation (no OK press needed).
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun TopNavBar(
     selectedTab: TopNavTab,
     onTabSelected: (TopNavTab) -> Unit,
     isHome: Boolean = false,
+    focusRequester: FocusRequester? = null,
+    onFocusChanged: (hasFocus: Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -63,6 +67,7 @@ fun TopNavBar(
             horizontalArrangement = Arrangement.spacedBy(2.dp),
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
+                .onFocusChanged { onFocusChanged(it.hasFocus) }
                 .background(
                     color = Color.Black.copy(alpha = if (isHome) 0.60f else 0.80f),
                     shape = RoundedCornerShape(50)
@@ -73,7 +78,8 @@ fun TopNavBar(
                 NavBarItem(
                     tab = tab,
                     isSelected = tab == selectedTab,
-                    onSelected = { onTabSelected(tab) }
+                    onSelected = { onTabSelected(tab) },
+                    itemFocusRequester = if (tab == selectedTab) focusRequester else null
                 )
             }
         }
@@ -85,28 +91,29 @@ fun TopNavBar(
 private fun NavBarItem(
     tab: TopNavTab,
     isSelected: Boolean,
-    onSelected: () -> Unit
+    onSelected: () -> Unit,
+    itemFocusRequester: FocusRequester? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
 
-    // Navigate on D-pad focus — no OK press required
+    // Navigate on D-pad focus — only when focusing a non-active tab to prevent nav loops
     LaunchedEffect(isFocused) {
-        if (isFocused) onSelected()
+        if (isFocused && !isSelected) onSelected()
     }
 
     Surface(
         onClick = onSelected,
         interactionSource = interactionSource,
-        modifier = Modifier.padding(horizontal = 1.dp)
+        modifier = Modifier
+            .padding(horizontal = 1.dp)
+            .then(if (itemFocusRequester != null) Modifier.focusRequester(itemFocusRequester) else Modifier)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .background(
-                    // Active = darker/more opaque pill inside the container
-                    color = if (isSelected) Color.Black.copy(alpha = 0.45f)
-                            else Color.Transparent,
+                    color = if (isSelected) Color.Black.copy(alpha = 0.45f) else Color.Transparent,
                     shape = RoundedCornerShape(50)
                 )
                 .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -117,9 +124,7 @@ private fun NavBarItem(
                 modifier = Modifier.size(15.dp),
                 tint = if (isSelected) Color.White else Color.White.copy(alpha = 0.55f)
             )
-            androidx.compose.foundation.layout.Spacer(
-                modifier = Modifier.width(6.dp)
-            )
+            androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = tab.label,
                 style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),

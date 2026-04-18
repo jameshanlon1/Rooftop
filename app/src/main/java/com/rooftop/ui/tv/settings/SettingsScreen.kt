@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,7 +19,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Sync
@@ -36,8 +33,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.tv.material3.Button
+import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
@@ -49,6 +49,7 @@ import com.rooftop.domain.model.PlaylistType
 import com.rooftop.ui.theme.RooftopDivider
 import com.rooftop.ui.theme.RooftopSecondary
 import com.rooftop.ui.theme.RooftopSurface
+import com.rooftop.ui.theme.RooftopSurfaceRaised
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -62,7 +63,6 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
-            // ── Active Playlist header ────────────────────────────────────────
             item {
                 ActivePlaylistRow(
                     playlist = uiState.activePlaylist,
@@ -76,18 +76,14 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             item { GroupHeader("Playlist Settings") }
             item {
                 SettingsCard {
-                    // Refresh Content
                     SettingsRow(
                         label = "Refresh Content",
                         trailingContent = {
                             if (uiState.isSyncing) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        Icons.Default.Sync,
-                                        contentDescription = null,
+                                    Icon(Icons.Default.Sync, null,
                                         tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(14.dp)
-                                    )
+                                        modifier = Modifier.size(14.dp))
                                     Spacer(Modifier.width(4.dp))
                                     Text("Syncing…", style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary)
@@ -96,14 +92,13 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                                 StatusBadge(
                                     label = uiState.syncStatus ?: "Synced",
                                     color = if (uiState.syncStatus?.contains("error") == true)
-                                                RooftopSecondary else Color(0xFF22C55E)
+                                        RooftopSecondary else Color(0xFF22C55E)
                                 )
                             }
                         },
                         onClick = { if (!uiState.isSyncing) viewModel.syncAll() }
                     )
                     SettingsDivider()
-                    // Edit Playlist / Add Playlist
                     SettingsRow(
                         label = if (uiState.activePlaylist != null) "Edit Playlist" else "Add Playlist",
                         value = uiState.activePlaylist?.let {
@@ -116,43 +111,20 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                         onClick = { viewModel.showAddDialog() }
                     )
                     SettingsDivider()
-                    // EPG URL
                     SettingsRow(
                         label = "EPG Source URL",
                         value = uiState.epgUrl.ifBlank { "Not set" },
                         showChevron = true,
-                        onClick = { /* inline edit below */ }
-                    )
-                    if (uiState.epgUrl.isNotBlank()) {
-                        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                            SettingsTextField(
-                                value = uiState.epgUrl,
-                                placeholder = "https://example.com/epg.xml",
-                                onValueChange = { viewModel.onEpgUrlChanged(it) }
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            Button(onClick = { viewModel.saveEpgUrl() }) {
-                                Text("Save EPG URL")
-                            }
-                        }
-                    }
-                    SettingsDivider()
-                    SettingsRow(
-                        label = "Manage Categories",
-                        showChevron = true,
-                        value = "Coming soon",
                         onClick = {}
                     )
                     SettingsDivider()
-                    SettingsRow(
-                        label = "Information",
-                        showChevron = true,
-                        onClick = {}
-                    )
+                    SettingsRow(label = "Manage Categories", value = "Coming soon",
+                        showChevron = true, onClick = {})
+                    SettingsDivider()
+                    SettingsRow(label = "Information", showChevron = true, onClick = {})
                 }
             }
 
-            // Playlists list (all added playlists)
             if (uiState.playlists.isNotEmpty()) {
                 item { Spacer(Modifier.height(8.dp)) }
                 item { GroupHeader("All Playlists") }
@@ -165,10 +137,14 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 item {
                     Surface(
                         onClick = { viewModel.showAddDialog() },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ClickableSurfaceDefaults.colors(
+                            containerColor = Color.Transparent,
+                            focusedContainerColor = RooftopSurfaceRaised
+                        )
                     ) {
                         Text(
-                            text = "+ Add Playlist",
+                            "+ Add Playlist",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
@@ -183,52 +159,31 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             item { GroupHeader("App Settings") }
             item {
                 SettingsCard {
-                    // §3.1 Player
                     SettingsRow(label = "Player", showChevron = true, onClick = {})
                     SettingsDivider()
-                    // Auto-play next episode (most-used player setting — shown inline)
-                    SettingsToggleRow(
-                        label = "Auto-Play Next Episode",
+                    SettingsToggleRow(label = "Auto-Play Next Episode",
                         checked = uiState.autoPlayNextEpisode,
-                        onToggle = { viewModel.onAutoPlayNextEpisodeToggled() }
-                    )
+                        onToggle = { viewModel.onAutoPlayNextEpisodeToggled() })
                     SettingsDivider()
-                    // §3.2 Interface
                     SettingsRow(label = "Interface", showChevron = true, onClick = {})
                     SettingsDivider()
-                    SettingsToggleRow(
-                        label = "Blur Unseen Episodes",
+                    SettingsToggleRow(label = "Blur Unseen Episodes",
                         checked = uiState.blurUnseenEpisodes,
-                        onToggle = { viewModel.onBlurUnseenEpisodesToggled() }
-                    )
+                        onToggle = { viewModel.onBlurUnseenEpisodesToggled() })
                     SettingsDivider()
-                    SettingsToggleRow(
-                        label = "New Episode Alerts",
+                    SettingsToggleRow(label = "New Episode Alerts",
                         checked = uiState.newEpisodeAlerts,
-                        onToggle = { viewModel.onNewEpisodeAlertsToggled() }
-                    )
+                        onToggle = { viewModel.onNewEpisodeAlertsToggled() })
                     SettingsDivider()
-                    SettingsToggleRow(
-                        label = "Show What's New on Update",
+                    SettingsToggleRow(label = "Show What's New on Update",
                         checked = uiState.showWhatsNewOnUpdate,
-                        onToggle = { viewModel.onShowWhatsNewToggled() }
-                    )
+                        onToggle = { viewModel.onShowWhatsNewToggled() })
                     SettingsDivider()
-                    // §3.3 Trakt
-                    SettingsRow(
-                        label = "Trakt",
-                        value = "Not connected",
-                        showChevron = true,
-                        onClick = {}
-                    )
+                    SettingsRow(label = "Trakt", value = "Not connected",
+                        showChevron = true, onClick = {})
                     SettingsDivider()
-                    // §3.4 OpenSubtitles
-                    SettingsRow(
-                        label = "OpenSubtitles",
-                        value = "Not connected",
-                        showChevron = true,
-                        onClick = {}
-                    )
+                    SettingsRow(label = "OpenSubtitles", value = "Not connected",
+                        showChevron = true, onClick = {})
                 }
             }
 
@@ -238,19 +193,10 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             item { GroupHeader("Storage") }
             item {
                 SettingsCard {
-                    SettingsRow(
-                        label = "Downloads",
-                        value = "Coming soon",
-                        showChevron = true,
-                        onClick = {}
-                    )
+                    SettingsRow(label = "Downloads", value = "Coming soon",
+                        showChevron = true, onClick = {})
                     SettingsDivider()
-                    SettingsRow(
-                        label = "Clear Cache",
-                        value = "",
-                        showChevron = false,
-                        onClick = {}
-                    )
+                    SettingsRow(label = "Clear Cache", showChevron = false, onClick = {})
                 }
             }
 
@@ -258,7 +204,6 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
         }
     }
 
-    // Add / Edit playlist dialog — uses Dialog to create its own window so TV focus is captured
     if (uiState.showAddDialog) {
         Dialog(
             onDismissRequest = { viewModel.hideAddDialog() },
@@ -279,7 +224,8 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     }
 }
 
-// ─── Section header (small-caps style, §Visual Style) ────────────────────────
+// ─── Section header ───────────────────────────────────────────────────────────
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun GroupHeader(title: String) {
     Text(
@@ -293,25 +239,22 @@ private fun GroupHeader(title: String) {
     )
 }
 
-// ─── Card container for a group of settings rows ─────────────────────────────
+// ─── Card container — non-clickable Surface, color set directly (no white corners) ──
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun SettingsCard(content: @Composable () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium
+        shape = RoundedCornerShape(16.dp),
+        color = RooftopSurface
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(RooftopSurface, RoundedCornerShape(16.dp))
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             content()
         }
     }
 }
 
-// ─── Single navigation/info row ──────────────────────────────────────────────
+// ─── Navigation/info row — transparent container, subtle focus highlight ─────
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun SettingsRow(
@@ -323,7 +266,11 @@ private fun SettingsRow(
 ) {
     Surface(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = Color.Transparent,
+            focusedContainerColor = Color.White.copy(alpha = 0.07f)
+        )
     ) {
         Row(
             modifier = Modifier
@@ -332,11 +279,8 @@ private fun SettingsRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f)
-            )
+            Text(text = label, style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -349,17 +293,13 @@ private fun SettingsRow(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(end = if (showChevron) 0.dp else 0.dp)
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 if (showChevron) {
-                    Icon(
-                        Icons.Default.ChevronRight,
-                        contentDescription = null,
+                    Icon(Icons.Default.ChevronRight, null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp)
-                    )
+                        modifier = Modifier.size(16.dp))
                 }
             }
         }
@@ -372,7 +312,11 @@ private fun SettingsRow(
 private fun SettingsToggleRow(label: String, checked: Boolean, onToggle: () -> Unit) {
     Surface(
         onClick = onToggle,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = Color.Transparent,
+            focusedContainerColor = Color.White.copy(alpha = 0.07f)
+        )
     ) {
         Row(
             modifier = Modifier
@@ -387,7 +331,6 @@ private fun SettingsToggleRow(label: String, checked: Boolean, onToggle: () -> U
     }
 }
 
-// Simple custom toggle that doesn't require material3 dependency
 @Composable
 private fun ToggleIndicator(checked: Boolean) {
     val trackColor = if (checked) MaterialTheme.colorScheme.primary
@@ -410,7 +353,7 @@ private fun ToggleIndicator(checked: Boolean) {
     }
 }
 
-// ─── 1dp divider between rows ────────────────────────────────────────────────
+// ─── Divider ─────────────────────────────────────────────────────────────────
 @Composable
 private fun SettingsDivider() {
     Box(
@@ -422,7 +365,8 @@ private fun SettingsDivider() {
     )
 }
 
-// ─── Status badge (e.g. "Synced" green, "Error" amber) ───────────────────────
+// ─── Status badge ─────────────────────────────────────────────────────────────
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun StatusBadge(label: String, color: Color) {
     Box(
@@ -443,22 +387,23 @@ private fun StatusBadge(label: String, color: Color) {
 @Composable
 private fun ActivePlaylistRow(playlist: Playlist?, onAddPlaylist: () -> Unit) {
     Surface(
-        onClick = if (playlist != null) { {} } else onAddPlaylist,
-        modifier = Modifier.fillMaxWidth()
+        onClick = if (playlist != null) ({}) else onAddPlaylist,
+        modifier = Modifier.fillMaxWidth(),
+        shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(16.dp)),
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = RooftopSurface,
+            focusedContainerColor = RooftopSurfaceRaised
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(RooftopSurface, RoundedCornerShape(16.dp))
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.PlayCircle,
-                contentDescription = null,
+            Icon(Icons.Default.PlayCircle, null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp)
-            )
+                modifier = Modifier.size(32.dp))
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -477,26 +422,27 @@ private fun ActivePlaylistRow(playlist: Playlist?, onAddPlaylist: () -> Unit) {
             } else {
                 StatusBadge("Synced", Color(0xFF22C55E))
                 Spacer(Modifier.width(8.dp))
-                Icon(
-                    Icons.Default.ChevronRight,
-                    contentDescription = null,
+                Icon(Icons.Default.ChevronRight, null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(16.dp)
-                )
+                    modifier = Modifier.size(16.dp))
             }
         }
     }
 }
 
-// ─── Playlist list card ───────────────────────────────────────────────────────
+// ─── Playlist list item ───────────────────────────────────────────────────────
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun PlaylistCard(playlist: Playlist, onDelete: () -> Unit) {
-    Surface(modifier = Modifier.fillMaxWidth()) {
+    // Non-clickable surface — color set directly, no white corners
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = RooftopSurface
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(RooftopSurface, RoundedCornerShape(12.dp))
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -535,50 +481,51 @@ private fun AddPlaylistDialog(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.65f)),
+            .background(Color.Black.copy(alpha = 0.70f)),
         contentAlignment = Alignment.Center
     ) {
+        // Non-clickable Surface — color set directly
         Surface(
-            modifier = Modifier.width(520.dp),
-            shape = MaterialTheme.shapes.medium
+            modifier = Modifier.width(560.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = RooftopSurface
         ) {
-            Column(
-                modifier = Modifier
-                    .background(RooftopSurface, RoundedCornerShape(20.dp))
-                    .padding(32.dp)
-            ) {
-                Text(
-                    "Add Playlist",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                )
-                Text(
-                    "Add your content source",
+            Column(modifier = Modifier.padding(32.dp)) {
+
+                Text("Add Playlist",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                Text("Add your content source",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+
                 Spacer(Modifier.height(24.dp))
 
-                // TYPE selector
+                // ── TYPE ─────────────────────────────────────────────────────
                 GroupHeader("Type")
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     PlaylistType.values().forEach { type ->
                         val isSelected = uiState.addType == type
+                        // Use ClickableSurfaceDefaults.colors so container color is correct — no white corners
                         Surface(
                             onClick = { onTypeChanged(type) },
-                            modifier = Modifier
-                                .background(
-                                    if (isSelected) MaterialTheme.colorScheme.primary
-                                    else Color.Transparent,
-                                    RoundedCornerShape(50)
-                                )
+                            shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(50)),
+                            colors = ClickableSurfaceDefaults.colors(
+                                containerColor = if (isSelected) MaterialTheme.colorScheme.primary
+                                                 else Color.White.copy(alpha = 0.09f),
+                                focusedContainerColor = if (isSelected) MaterialTheme.colorScheme.primary
+                                                        else Color.White.copy(alpha = 0.16f)
+                            )
                         ) {
                             Text(
-                                text = type.name,
+                                text = when (type) {
+                                    PlaylistType.M3U -> "M3U Playlist"
+                                    PlaylistType.XTREAM -> "Xtream Codes"
+                                },
                                 style = MaterialTheme.typography.labelMedium,
-                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                color = if (isSelected) Color.White
                                         else MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp)
                             )
                         }
                     }
@@ -586,37 +533,42 @@ private fun AddPlaylistDialog(
 
                 Spacer(Modifier.height(20.dp))
 
-                // ICON & NAME
-                GroupHeader("Icon & Name")
+                // ── NAME ─────────────────────────────────────────────────────
+                GroupHeader("Name")
                 Spacer(Modifier.height(8.dp))
-                LabeledField("Name", uiState.addName, "My Playlist", onNameChanged)
+                InputField(
+                    value = uiState.addName,
+                    placeholder = "My Playlist",
+                    onValueChange = onNameChanged
+                )
 
                 Spacer(Modifier.height(20.dp))
 
-                // CONNECTION
+                // ── CONNECTION ───────────────────────────────────────────────
                 GroupHeader("Connection")
                 Spacer(Modifier.height(8.dp))
                 when (uiState.addType) {
                     PlaylistType.XTREAM -> {
-                        LabeledField("Server", uiState.addXtreamBase, "http://example.com:8080", onXtreamBaseChanged)
+                        InputField(uiState.addXtreamBase, "Server  (http://example.com:8080)", onXtreamBaseChanged)
                         Spacer(Modifier.height(8.dp))
-                        LabeledField("Username", uiState.addXtreamUser, "", onXtreamUserChanged)
+                        InputField(uiState.addXtreamUser, "Username", onXtreamUserChanged)
                         Spacer(Modifier.height(8.dp))
-                        LabeledField("Password", uiState.addXtreamPass, "", onXtreamPassChanged)
+                        InputField(uiState.addXtreamPass, "Password", onXtreamPassChanged)
                     }
                     PlaylistType.M3U -> {
-                        LabeledField("URL", uiState.addUrl, "https://…/playlist.m3u", onUrlChanged)
+                        InputField(uiState.addUrl, "URL  (https://…/playlist.m3u)", onUrlChanged)
                     }
                 }
 
                 Spacer(Modifier.height(28.dp))
 
-                // Actions
+                // ── ACTIONS ──────────────────────────────────────────────────
                 Button(
                     onClick = onAdd,
                     modifier = Modifier.fillMaxWidth().height(52.dp)
                 ) {
-                    Text("Connect", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold))
+                    Text("Connect",
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold))
                 }
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(
@@ -630,25 +582,15 @@ private fun AddPlaylistDialog(
     }
 }
 
-@Composable
-private fun LabeledField(label: String, value: String, placeholder: String, onValueChange: (String) -> Unit) {
-    Column {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.height(4.dp))
-        SettingsTextField(value = value, placeholder = placeholder, onValueChange = onValueChange)
-    }
-}
-
+// ─── Plain text input field ───────────────────────────────────────────────────
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-private fun SettingsTextField(value: String, placeholder: String, onValueChange: (String) -> Unit) {
+private fun InputField(value: String, placeholder: String, onValueChange: (String) -> Unit) {
+    // Non-clickable Surface with explicit color — no white corners
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraSmall
+        shape = RoundedCornerShape(8.dp),
+        color = Color.White.copy(alpha = 0.07f)
     ) {
         BasicTextField(
             value = value,
@@ -658,13 +600,11 @@ private fun SettingsTextField(value: String, placeholder: String, onValueChange:
                 color = MaterialTheme.colorScheme.onSurface
             ),
             decorationBox = { inner ->
-                Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+                Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp)) {
                     if (value.isEmpty()) {
-                        Text(
-                            placeholder,
+                        Text(placeholder,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     inner()
                 }
