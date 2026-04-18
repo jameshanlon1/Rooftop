@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusGroup
 import androidx.compose.ui.focus.focusProperties
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -90,10 +91,12 @@ fun RooftopNavGraph(playbackRequestHolder: PlaybackRequestHolder) {
             )
         }
 
-        // focusProperties routes D-pad Up (when exiting content area) to the selected nav tab
+        // focusGroup + focusProperties: D-pad Up exiting content goes to selected nav tab;
+        // focusGroup ensures the property applies to all children, not just the Box node itself.
         Box(
             modifier = Modifier
                 .weight(1f)
+                .focusGroup()
                 .focusProperties { up = navFocusRequester }
         ) {
             NavHost(
@@ -124,7 +127,13 @@ fun RooftopNavGraph(playbackRequestHolder: PlaybackRequestHolder) {
                             )
                             navController.navigate(Route.VodPlayer.path)
                         },
-                        onNavigateToSettings = { navController.navigate(Route.Settings.path) }
+                        onNavigateToSettings = {
+                            navController.navigate(Route.Settings.path) {
+                                popUpTo(Route.Home.path) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
                     )
                 }
 
