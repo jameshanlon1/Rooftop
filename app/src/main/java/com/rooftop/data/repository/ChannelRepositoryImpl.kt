@@ -62,7 +62,7 @@ class ChannelRepositoryImpl @Inject constructor(
                 m3uParser.parse(M3USource.RemoteUrl(url))
             }
             PlaylistType.XTREAM -> {
-                val baseUrl = playlist.xtreamBaseUrl ?: return Result.Error(Exception("Xtream base URL missing"))
+                val baseUrl = (playlist.xtreamBaseUrl ?: return Result.Error(Exception("Xtream base URL missing"))).trimEnd('/')
                 val username = playlist.xtreamUsername ?: return Result.Error(Exception("Xtream username missing"))
                 val password = playlist.xtreamPassword ?: return Result.Error(Exception("Xtream password missing"))
                 val url = "$baseUrl/player_api.php?username=$username&password=$password&action=get_live_streams"

@@ -72,7 +72,7 @@ class SeriesRepositoryImpl @Inject constructor(
     }
 
     override suspend fun refreshSeries(playlist: Playlist): Result<Unit> = try {
-        val baseUrl = playlist.xtreamBaseUrl ?: return Result.Error(Exception("Missing Xtream base URL"))
+        val baseUrl = (playlist.xtreamBaseUrl ?: return Result.Error(Exception("Missing Xtream base URL"))).trimEnd('/')
         val username = playlist.xtreamUsername ?: return Result.Error(Exception("Missing username"))
         val password = playlist.xtreamPassword ?: return Result.Error(Exception("Missing password"))
         val url = "$baseUrl/player_api.php?username=$username&password=$password&action=get_series"

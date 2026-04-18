@@ -270,7 +270,8 @@ private fun SettingsRow(
         colors = ClickableSurfaceDefaults.colors(
             containerColor = Color.Transparent,
             focusedContainerColor = Color.White.copy(alpha = 0.07f)
-        )
+        ),
+        scale = ClickableSurfaceDefaults.scale(focusedScale = 1f, pressedScale = 1f)
     ) {
         Row(
             modifier = Modifier
@@ -316,7 +317,8 @@ private fun SettingsToggleRow(label: String, checked: Boolean, onToggle: () -> U
         colors = ClickableSurfaceDefaults.colors(
             containerColor = Color.Transparent,
             focusedContainerColor = Color.White.copy(alpha = 0.07f)
-        )
+        ),
+        scale = ClickableSurfaceDefaults.scale(focusedScale = 1f, pressedScale = 1f)
     ) {
         Row(
             modifier = Modifier
@@ -393,7 +395,8 @@ private fun ActivePlaylistRow(playlist: Playlist?, onAddPlaylist: () -> Unit) {
         colors = ClickableSurfaceDefaults.colors(
             containerColor = RooftopSurface,
             focusedContainerColor = RooftopSurfaceRaised
-        )
+        ),
+        scale = ClickableSurfaceDefaults.scale(focusedScale = 1f, pressedScale = 1f)
     ) {
         Row(
             modifier = Modifier
@@ -515,7 +518,8 @@ private fun AddPlaylistDialog(
                                                  else Color.White.copy(alpha = 0.09f),
                                 focusedContainerColor = if (isSelected) MaterialTheme.colorScheme.primary
                                                         else Color.White.copy(alpha = 0.16f)
-                            )
+                            ),
+                            scale = ClickableSurfaceDefaults.scale(focusedScale = 1f, pressedScale = 1f)
                         ) {
                             Text(
                                 text = when (type) {
